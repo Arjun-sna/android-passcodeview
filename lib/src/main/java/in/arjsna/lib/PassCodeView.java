@@ -26,6 +26,8 @@ import java.util.Map;
 public class PassCodeView extends View {
     private final int KEYS_COUNT = 12;
     private final String eraseChar = "\u232B";
+    private final int KEY_PAD_COLS = 3;
+    private final int KEY_PAD_ROWS = 4;
     private int digits;
     private int filledCount;
     private Bitmap filledDrawable;
@@ -46,17 +48,11 @@ public class PassCodeView extends View {
     private int keyHeight;
     private String passCodeText = "";
     private TextChangeListener textChangeListener;
-    private boolean skipKepDraw = false;
-    private boolean isPointerMoved = false;
-    private int touchSlope;
-    private int touchX = 0;
-    private int touchY = 0;
-    private int pointTouchX;
-    private int pointTouchY;
+    private boolean skipKeyDraw = false;
+    private int touchSlope = 5;
 
     private Map<Integer, Integer> touchXMap = new HashMap<>();
     private Map<Integer, Integer> touchYMap = new HashMap<>();
-    private Map<Integer, Boolean> moveMap = new HashMap<>();
 
     public PassCodeView(Context context) {
         super(context);
@@ -95,9 +91,6 @@ public class PassCodeView extends View {
         paint = new Paint(TextPaint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.FILL);
         values.recycle();
-        ViewConfiguration configuration = ViewConfiguration.get(context);
-        touchSlope = configuration.getScaledTouchSlop();
-                ;
     }
 
     private void computeDrawableStartXY() {
@@ -112,8 +105,9 @@ public class PassCodeView extends View {
     private void computeKeyboardStartXY() {
         kpStartX = 0;
         kpStartY = drawableHeight + DRAWABLE_PADDING;
-        keyWidth = getMeasuredWidth() / 3;
-        keyHeight = (getMeasuredHeight() - (drawableHeight + 2 * DRAWABLE_PADDING)) / 4;
+        keyWidth = getMeasuredWidth() / KEY_PAD_COLS;
+        keyHeight = (getMeasuredHeight()
+                - (drawableHeight + 2 * DRAWABLE_PADDING)) / KEY_PAD_ROWS;
         initialiseKeyRects();
     }
 
@@ -156,21 +150,23 @@ public class PassCodeView extends View {
 
     private void drawKeyPad(Canvas canvas) {
         paint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
-        Log.i("Keypad drawn", "Keypad drawn");
         for (KeyRect rect : keyRects) {
-            canvas.drawText(rect.value, rect.rect.centerX(), rect.rect.centerY(), paint);
+            canvas.drawText(rect.value,
+                    rect.rect.centerX(),
+                    rect.rect.centerY(), paint);
         }
     }
 
     private void drawCodeText(Canvas canvas) {
         int x = drawableStartX, y = drawableStartY;
+        int totalContentWidth = drawableWidth + DIGIT_PADDING;
         for (int i = 1 ; i <= filledCount ; i ++) {
             canvas.drawBitmap(filledDrawable, x, y, paint);
-            x = x + (drawableWidth + DIGIT_PADDING);
+            x += totalContentWidth;
         }
         for (int i = 1 ; i <= (digits - filledCount) ; i ++) {
             canvas.drawBitmap(emptyDrawable, x, y, paint);
-            x = x + (drawableWidth + DIGIT_PADDING);
+            x += totalContentWidth;
         }
     }
 
@@ -200,7 +196,6 @@ public class PassCodeView extends View {
 
     private void setFilledCount(int count) {
         filledCount = count > digits ? digits : count;
-        skipKepDraw = true;
         invalidate(drawableStartX,
                 drawableStartX,
                 drawableStartX + getMeasuredWidth(),
@@ -215,67 +210,47 @@ public class PassCodeView extends View {
     private boolean processTouch(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                touchXMap.put(0, (int) event.getX());
-                touchYMap.put(0, (int) event.getY());
-                moveMap.put(0, false);
+                int pointerDownId = event.getPointerId(event.getActionIndex());
+                touchXMap.put(pointerDownId, (int) event.getX());
+                touchYMap.put(pointerDownId, (int) event.getY());
                 break;
 
             case MotionEvent.ACTION_UP:
-                int pointerUpId = event.getPointerId(0);
-                if (moveMap.get(pointerUpId)) {
-                    moveMap.remove(pointerUpId);
-                    touchXMap.remove(pointerUpId);
-                    touchYMap.remove(pointerUpId);
-                    break;
-                }
-                int eventX = (int) event.getX();
-                int eventY = (int) event.getY();
-                findKeyPressed(eventX, eventY);
+                int pointerUpId = event.getPointerId(event.getActionIndex());
+                int pointerUpIndex = event.findPointerIndex(pointerUpId);
+                int eventX = (int) event.getX(pointerUpIndex);
+                int eventY = (int) event.getY(pointerUpIndex);
+                findKeyPressed(touchXMap.get(pointerUpId),
+                        touchYMap.get(pointerUpId),eventX, eventY);
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
                 Log.i("Pointer", "down");
-                int pointerDownId = event.getPointerId(event.getActionIndex());
-                touchXMap.put(pointerDownId, (int) event.getX(event.getActionIndex()));
-                touchYMap.put(pointerDownId, (int) event.getY(event.getActionIndex()));
-                moveMap.put(pointerDownId, false);
+                int pointerActionDownId = event.getPointerId(event.getActionIndex());
+                touchXMap.put(pointerActionDownId, (int) event.getX(event.getActionIndex()));
+                touchYMap.put(pointerActionDownId, (int) event.getY(event.getActionIndex()));
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
-                int pointerActionUpId = event.getPointerId(event.getActionIndex());
-                if (moveMap.get(pointerActionUpId)) {
-                    moveMap.remove(pointerActionUpId);
-                    touchXMap.remove(pointerActionUpId);
-                    touchYMap.remove(pointerActionUpId);
-                    break;
-                }
-                int eventPointerX = (int) event.getX(event.getActionIndex());
-                int eventPointerY = (int) event.getY(event.getActionIndex());
-                findKeyPressed(eventPointerX, eventPointerY);
+                int pointerActionUpIndex = event.getActionIndex();
+                int pointerActionUpId = event.getPointerId(pointerActionUpIndex);
+                int eventPointerX = (int) event.getX(pointerActionUpIndex);
+                int eventPointerY = (int) event.getY(pointerActionUpIndex);
+                findKeyPressed(touchXMap.get(pointerActionUpId),
+                        touchYMap.get(pointerActionUpId), eventPointerX, eventPointerY);
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                for (int i = 0 ; i < event.getPointerCount() ; i++) {
-                    int pointerId = event.getPointerId(i);
-                    Log.i("New Pointer", " " + touchXMap.get(pointerId) + " " +  event.getX(event.findPointerIndex(pointerId)));
-                    int dx = (int) (touchXMap.get(pointerId) - event.getX(event.findPointerIndex(pointerId)));
-                    int dy = (int) (touchYMap.get(pointerId) - event.getY(event.findPointerIndex(pointerId)));
-                    touchXMap.put(pointerId, (int) event.getX(event.findPointerIndex(pointerId)));
-                    touchYMap.put(pointerId, (int) event.getY(event.findPointerIndex(pointerId)));
-                    if (Math.abs(dx) > touchSlope || Math.abs(dy) > touchSlope) {
-                        Log.i("Moved", "Moved");
-                        moveMap.put(pointerId, true);
-                    }
-                }
             case MotionEvent.ACTION_CANCEL:
                 return false;
         }
         return true;
     }
 
-    private void findKeyPressed(int eventX, int eventY) {
+    private void findKeyPressed(int downEventX, int downEventY, int upEventX, int upEventY) {
         for (KeyRect keyRect : keyRects) {
-            if (keyRect.rect.contains(eventX, eventY)) {
+            if (keyRect.rect.contains(downEventX, downEventY)
+                    && keyRect.rect.contains(upEventX, upEventY)) {
                 int length = passCodeText.length();
                 if (keyRect.value.equals(eraseChar)) {
                     if (length > 0) {
