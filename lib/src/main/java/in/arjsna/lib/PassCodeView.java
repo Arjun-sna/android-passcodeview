@@ -9,8 +9,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 
 import java.util.ArrayList;
 
@@ -18,7 +22,8 @@ import java.util.ArrayList;
  * Created by arjun on 8/2/16.
  */
 public class PassCodeView extends View {
-    private static final int KEYS_COUNT = 12;
+    private final int KEYS_COUNT = 12;
+    private final String eraseChar = "\u232B";
     private int digits;
     private int filledCount;
     private Bitmap filledDrawable;
@@ -26,7 +31,7 @@ public class PassCodeView extends View {
     private Paint paint;
     private int DEFAULT_DRAWABLE_DIM = 80;
     private int DEFAULT_VIEW_HEIGHT = 200;
-    private int DRAWABLE_PADDING = 60;
+    private int DRAWABLE_PADDING = 100;
     private int drawableWidth;
     private int drawableHeight;
     private int drawableStartX;
@@ -34,9 +39,16 @@ public class PassCodeView extends View {
     private static final int DIGIT_PADDING = 40;
     private int kpStartX;
     private int kpStartY;
-    private ArrayList<Rect> keyRects = new ArrayList<>();
+    private ArrayList<KeyRect> keyRects = new ArrayList<>();
     private int keyWidth;
     private int keyHeight;
+    private String passCodeText = "";
+    private TextChangeListener textChangeListener;
+    private boolean skipKepDraw = false;
+    private boolean isPointerMoved = false;
+    private int touchSlope;
+    private int touchX = 0;
+    private int touchY = 0;
 
     public PassCodeView(Context context) {
         super(context);
@@ -72,8 +84,12 @@ public class PassCodeView extends View {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        paint = new Paint();
+        paint = new Paint(TextPaint.ANTI_ALIAS_FLAG);
+        paint.setStyle(Paint.Style.FILL);
         values.recycle();
+        ViewConfiguration configuration = ViewConfiguration.get(context);
+        touchSlope = configuration.getScaledTouchSlop();
+                ;
     }
 
     private void computeDrawableStartXY() {
@@ -94,15 +110,22 @@ public class PassCodeView extends View {
     }
 
     private void initialiseKeyRects() {
+        keyRects.clear();
         int x = kpStartX, y = kpStartY;
         for (int i = 1 ; i <= KEYS_COUNT ; i ++) {
-            keyRects.add(new Rect(x, y, x + keyWidth, y + keyHeight));
+            keyRects.add(
+                    new KeyRect(new Rect(x, y, x + keyWidth, y + keyHeight),
+                    String.valueOf(i)));
             x = x + keyWidth;
             if (i % 3 == 0) {
                 y = y + keyHeight;
                 x = kpStartX;
             }
         }
+        // TODO: 8/3/16 looks bad
+        keyRects.get(9).setValue("");
+        keyRects.get(10).setValue("0");
+        keyRects.get(11).setValue(eraseChar);
     }
 
     private Bitmap getBitmap(int resId) {
@@ -118,15 +141,17 @@ public class PassCodeView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        paint.setColor(Color.argb(255, 0, 0, 255));
+        paint.setColor(Color.argb(255, 0, 0, 0));
         drawCodeText(canvas);
         drawKeyPad(canvas);
     }
 
     private void drawKeyPad(Canvas canvas) {
         paint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
-        for (Rect rect : keyRects) {
-            canvas.drawText("2", rect.centerX(), rect.centerY(), paint);
+//        paint.setTypeface()
+        Log.i("Keypad drawn", "Keypad drawn");
+        for (KeyRect rect : keyRects) {
+            canvas.drawText(rect.value, rect.rect.centerX(), rect.rect.centerY(), paint);
         }
     }
 
@@ -144,7 +169,7 @@ public class PassCodeView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // TODO: 8/3/16 take care of padding
+        // TODO: 8/3/16 mind the padding
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int paddingLeft = getPaddingLeft();
@@ -166,8 +191,82 @@ public class PassCodeView extends View {
         computeDrawableStartXY();
     }
 
-    public void setFilledCount(int count) {
+    private void setFilledCount(int count) {
         filledCount = count > digits ? digits : count;
-        invalidate();
+        skipKepDraw = true;
+        invalidate(drawableStartX,
+                drawableStartX,
+                drawableStartX + getMeasuredWidth(),
+                drawableStartY + getMeasuredHeight());
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+            return processTouch(event);
+    }
+
+    private boolean processTouch(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                touchX = (int) event.getX();
+                touchY = (int) event.getY();
+                break;
+
+            case MotionEvent.ACTION_UP:
+                if (isPointerMoved) {
+                    isPointerMoved = false;
+                    break;
+                }
+                int eventX = (int) event.getX();
+                int eventY = (int) event.getY();
+                for (KeyRect keyRect : keyRects) {
+                    if (keyRect.rect.contains(eventX, eventY)) {
+                        int length = passCodeText.length();
+                        if (keyRect.value.equals(eraseChar)) {
+                            if (length > 0) {
+                                passCodeText = passCodeText.substring(0, passCodeText.length() - 1);
+                                invalidateAndNotifyListener();
+                            }
+                        } else if (!keyRect.value.isEmpty() && length < digits) {
+                            passCodeText = passCodeText + keyRect.value;
+                            invalidateAndNotifyListener();
+                        }
+                    }
+                }
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                int dx = (int) (touchX - event.getX());
+                int dy = (int) (touchY - event.getY());
+                touchX = (int) event.getX();
+                touchY = (int) event.getY();
+                if(Math.abs(dx) > touchSlope || Math.abs(dy) > touchSlope) {
+                    Log.i("Moved", "Moved");
+                    isPointerMoved = true;
+                }
+            case MotionEvent.ACTION_CANCEL:
+                return false;
+        }
+        return true;
+    }
+
+    public interface TextChangeListener {
+        void onTextChanged(String text);
+    }
+
+    private void invalidateAndNotifyListener() {
+        setFilledCount(passCodeText.length());
+        if (textChangeListener != null) {
+            textChangeListener.onTextChanged(passCodeText);
+        }
+    }
+
+    public void setOnTextChangeListener(TextChangeListener listener) {
+        this.textChangeListener = listener;
+    }
+
+    public void removeOnTextChangeListener() {
+        this.textChangeListener = null;
+    }
+
 }
