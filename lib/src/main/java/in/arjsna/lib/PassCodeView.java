@@ -7,14 +7,18 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
+
+import java.util.ArrayList;
 
 /**
  * Created by arjun on 8/2/16.
  */
 public class PassCodeView extends View {
+    private static final int KEYS_COUNT = 12;
     private int digits;
     private int filledCount;
     private Bitmap filledDrawable;
@@ -22,11 +26,17 @@ public class PassCodeView extends View {
     private Paint paint;
     private int DEFAULT_DRAWABLE_DIM = 80;
     private int DEFAULT_VIEW_HEIGHT = 200;
+    private int DRAWABLE_PADDING = 60;
     private int drawableWidth;
     private int drawableHeight;
-    private int startX;
-    private int startY;
+    private int drawableStartX;
+    private int drawableStartY;
     private static final int DIGIT_PADDING = 40;
+    private int kpStartX;
+    private int kpStartY;
+    private ArrayList<Rect> keyRects = new ArrayList<>();
+    private int keyWidth;
+    private int keyHeight;
 
     public PassCodeView(Context context) {
         super(context);
@@ -66,12 +76,33 @@ public class PassCodeView extends View {
         values.recycle();
     }
 
-    private void computeStartXY() {
+    private void computeDrawableStartXY() {
         int totalDrawableWidth = digits * drawableWidth;
         int totalPaddingWidth = DIGIT_PADDING * (digits - 1);
         int totalReqWidth = totalDrawableWidth + totalPaddingWidth;
-        startX = getMeasuredWidth() / 2 - totalReqWidth / 2;
-        startY = getMeasuredHeight() / 2 - drawableHeight / 2;
+        drawableStartX = getMeasuredWidth() / 2 - totalReqWidth / 2;
+        drawableStartY = (drawableHeight + DRAWABLE_PADDING) / 2 - drawableHeight / 2;
+        computeKeyboardStartXY();
+    }
+
+    private void computeKeyboardStartXY() {
+        kpStartX = 0;
+        kpStartY = drawableHeight + DRAWABLE_PADDING;
+        keyWidth = getMeasuredWidth() / 3;
+        keyHeight = (getMeasuredHeight() - (drawableHeight + 2 * DRAWABLE_PADDING)) / 4;
+        initialiseKeyRects();
+    }
+
+    private void initialiseKeyRects() {
+        int x = kpStartX, y = kpStartY;
+        for (int i = 1 ; i <= KEYS_COUNT ; i ++) {
+            keyRects.add(new Rect(x, y, x + keyWidth, y + keyHeight));
+            x = x + keyWidth;
+            if (i % 3 == 0) {
+                y = y + keyHeight;
+                x = kpStartX;
+            }
+        }
     }
 
     private Bitmap getBitmap(int resId) {
@@ -88,7 +119,19 @@ public class PassCodeView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         paint.setColor(Color.argb(255, 0, 0, 255));
-        int x = startX, y = startY;
+        drawCodeText(canvas);
+        drawKeyPad(canvas);
+    }
+
+    private void drawKeyPad(Canvas canvas) {
+        paint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
+        for (Rect rect : keyRects) {
+            canvas.drawText("2", rect.centerX(), rect.centerY(), paint);
+        }
+    }
+
+    private void drawCodeText(Canvas canvas) {
+        int x = drawableStartX, y = drawableStartY;
         for (int i = 1 ; i <= filledCount ; i ++) {
             canvas.drawBitmap(filledDrawable, x, y, paint);
             x = x + (drawableWidth + DIGIT_PADDING);
@@ -116,10 +159,11 @@ public class PassCodeView extends View {
         if (heightMode == MeasureSpec.EXACTLY) {
             measuredHeight = MeasureSpec.getSize(heightMeasureSpec);
         } else if (heightMode == MeasureSpec.AT_MOST) {
-            measuredHeight = drawableHeight + paddingTop + paddingBottom;
+            double height = MeasureSpec.getSize(heightMeasureSpec) * 0.7;
+            measuredHeight = (int)height;// + paddingTop + paddingBottom;
         }
         setMeasuredDimension(measuredWidth, measuredHeight);
-        computeStartXY();
+        computeDrawableStartXY();
     }
 
     public void setFilledCount(int count) {
