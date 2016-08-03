@@ -24,6 +24,7 @@ import java.util.Map;
  * Created by arjun on 8/2/16.
  */
 public class PassCodeView extends View {
+    private boolean DEBUG = false;
     private final int KEYS_COUNT = 12;
     private final String eraseChar = "\u232B";
     private final int KEY_PAD_COLS = 3;
@@ -150,10 +151,20 @@ public class PassCodeView extends View {
 
     private void drawKeyPad(Canvas canvas) {
         paint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
+        paint.setTextAlign(Paint.Align.CENTER);
+        float centerHalf = (paint.descent() + paint.ascent()) / 2;
         for (KeyRect rect : keyRects) {
             canvas.drawText(rect.value,
-                    rect.rect.centerX(),
-                    rect.rect.centerY(), paint);
+                    rect.rect.exactCenterX(),
+                    rect.rect.exactCenterY() - centerHalf, paint);
+            if (DEBUG) {
+                canvas.drawLine(rect.rect.left,
+                        rect.rect.centerY(),
+                        rect.rect.right, rect.rect.centerY(), paint);
+                canvas.drawLine(rect.rect.centerX(),
+                        rect.rect.top,
+                        rect.rect.centerX(), rect.rect.bottom, paint);
+            }
         }
     }
 
