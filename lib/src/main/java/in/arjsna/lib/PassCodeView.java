@@ -2,12 +2,14 @@ package in.arjsna.lib;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
@@ -30,11 +32,11 @@ public class PassCodeView extends View {
     private final int KEY_PAD_COLS = 3;
     private final int KEY_PAD_ROWS = 4;
     private int digits;
-    private int filledCount;
+    private int filledCount = 0;
     private Bitmap filledDrawable;
     private Bitmap emptyDrawable;
     private Paint paint;
-    private int DEFAULT_DRAWABLE_DIM = 80;
+    private int DEFAULT_DRAWABLE_DIM = 50;
     private int DEFAULT_VIEW_HEIGHT = 200;
     private int DRAWABLE_PADDING = 100;
     private int drawableWidth;
@@ -54,6 +56,8 @@ public class PassCodeView extends View {
 
     private Map<Integer, Integer> touchXMap = new HashMap<>();
     private Map<Integer, Integer> touchYMap = new HashMap<>();
+    private Typeface typeFace;
+    private TextPaint textPaint;
 
     public PassCodeView(Context context) {
         super(context);
@@ -81,7 +85,7 @@ public class PassCodeView extends View {
                 R.styleable.PassCodeView, defStyleAttr, defStyleRes);
         try {
             digits = values.getInteger(R.styleable.PassCodeView_digits, 4);
-            filledCount = values.getInteger(R.styleable.PassCodeView_filled_count, 0);
+//            filledCount = values.getInteger(R.styleable.PassCodeView_filled_count, 0);
             filledDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_filled_drawable, -1));
             emptyDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_empty_drawable, -1));
             drawableWidth = DEFAULT_DRAWABLE_DIM;
@@ -90,8 +94,27 @@ public class PassCodeView extends View {
             e.printStackTrace();
         }
         paint = new Paint(TextPaint.ANTI_ALIAS_FLAG);
+        textPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.FILL);
+        textPaint.setStyle(Paint.Style.FILL);
+        textPaint.setColor(Color.argb(255, 0, 0, 0));
+        textPaint.density = getResources().getDisplayMetrics().density;
         values.recycle();
+    }
+
+    public void setTypeFace(Typeface typeFace) {
+        if (this.typeFace != typeFace) {
+            this.typeFace = typeFace;
+            textPaint.setTypeface(typeFace);
+            requestLayout();
+            invalidate();
+        }
+    }
+
+    public void setTextColor(int color) {
+        ColorStateList colorStateList = ColorStateList.valueOf(color);
+        textPaint.setColor(colorStateList.getColorForState(getDrawableState(), 0));
+        invalidate();
     }
 
     private void computeDrawableStartXY() {
@@ -144,26 +167,25 @@ public class PassCodeView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        paint.setColor(Color.argb(255, 0, 0, 0));
         drawCodeText(canvas);
         drawKeyPad(canvas);
     }
 
     private void drawKeyPad(Canvas canvas) {
-        paint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
-        paint.setTextAlign(Paint.Align.CENTER);
-        float centerHalf = (paint.descent() + paint.ascent()) / 2;
+        textPaint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        float centerHalf = (textPaint.descent() + textPaint.ascent()) / 2;
         for (KeyRect rect : keyRects) {
             canvas.drawText(rect.value,
                     rect.rect.exactCenterX(),
-                    rect.rect.exactCenterY() - centerHalf, paint);
+                    rect.rect.exactCenterY() - centerHalf, textPaint);
             if (DEBUG) {
                 canvas.drawLine(rect.rect.left,
                         rect.rect.centerY(),
-                        rect.rect.right, rect.rect.centerY(), paint);
+                        rect.rect.right, rect.rect.centerY(), textPaint);
                 canvas.drawLine(rect.rect.centerX(),
                         rect.rect.top,
-                        rect.rect.centerX(), rect.rect.bottom, paint);
+                        rect.rect.centerX(), rect.rect.bottom, textPaint);
             }
         }
     }
@@ -274,6 +296,11 @@ public class PassCodeView extends View {
                 }
             }
         }
+    }
+
+    public void reset() {
+        this.passCodeText = "";
+        invalidate();
     }
 
     public interface TextChangeListener {
