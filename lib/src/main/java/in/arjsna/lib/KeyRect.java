@@ -6,8 +6,12 @@ import android.graphics.Rect;
  * Created by arjun on 8/3/16.
  */
 public class KeyRect {
-    Rect rect;
-    String value;
+    public Rect rect;
+    public String value;
+    public int rippleRadius;
+    public int requiredRadius;
+    public int circleAlpha;
+    public boolean hasRippleEffect = false;
 
     public KeyRect(Rect rect, String value) {
         this.rect = rect;

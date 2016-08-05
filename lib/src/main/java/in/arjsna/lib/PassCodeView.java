@@ -11,12 +11,15 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.os.HandlerThread;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,6 +62,9 @@ public class PassCodeView extends View {
     private Typeface typeFace;
     private TextPaint textPaint;
     private float keyTextSize;
+    private long animDuration = 200;
+    private final int MAX_RIPPLE_ALPHA = 255;
+    private Paint circlePaint;
 
     public PassCodeView(Context context) {
         super(context);
@@ -105,6 +111,8 @@ public class PassCodeView extends View {
     private void preparePaint() {
         paint = new Paint(TextPaint.ANTI_ALIAS_FLAG);
         textPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
+        circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        circlePaint.setStyle(Paint.Style.FILL);
         paint.setStyle(Paint.Style.FILL);
         textPaint.setStyle(Paint.Style.FILL);
         textPaint.setColor(Color.argb(255, 0, 0, 0));
@@ -194,6 +202,11 @@ public class PassCodeView extends View {
             canvas.drawText(rect.value,
                     rect.rect.exactCenterX(),
                     rect.rect.exactCenterY() - centerHalf, textPaint);
+            if (rect.hasRippleEffect) {
+                circlePaint.setAlpha(rect.circleAlpha);
+                canvas.drawCircle(rect.rect.exactCenterX(), rect.rect.exactCenterY(),
+                        rect.rippleRadius, circlePaint);
+            }
             if (DEBUG) {
                 canvas.drawLine(rect.rect.left,
                         rect.rect.centerY(),
@@ -309,8 +322,44 @@ public class PassCodeView extends View {
                     passCodeText = passCodeText + keyRect.value;
                     invalidateAndNotifyListener();
                 }
+                playRippleEffect(keyRect);
             }
         }
+    }
+
+    private void playRippleEffect(final KeyRect keyRect) {
+        keyRect.hasRippleEffect = true;
+        keyRect.requiredRadius = (keyRect.rect.right - keyRect.rect.left) / 2;
+        ValueGeneratorAnim valueGeneratorAnim = new ValueGeneratorAnim(new InterpolatedTimeCallback() {
+            @Override
+            public void onTimeUpdate(float interpolatedTime) {
+                if (keyRect.hasRippleEffect) {
+                    keyRect.rippleRadius = (int) (keyRect.requiredRadius * interpolatedTime);
+                    keyRect.circleAlpha = (int) (MAX_RIPPLE_ALPHA - (MAX_RIPPLE_ALPHA * interpolatedTime));
+                    invalidate(keyRect.rect.left, keyRect.rect.top, keyRect.rect.right, keyRect.rect.bottom);
+                    Log.i("Animating", keyRect.rippleRadius + " "  + keyRect.circleAlpha);
+                }
+            }
+        });
+        valueGeneratorAnim.setDuration(animDuration);
+        valueGeneratorAnim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                Log.i("Animating", "start");
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                keyRect.hasRippleEffect = false;
+                Log.i("Animating", "end");
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        startAnimation(valueGeneratorAnim);
     }
 
     public void reset() {
@@ -338,4 +387,21 @@ public class PassCodeView extends View {
         this.textChangeListener = null;
     }
 
+    class ValueGeneratorAnim extends Animation {
+
+        private InterpolatedTimeCallback interpolatedTimeCallback;
+
+        ValueGeneratorAnim(InterpolatedTimeCallback interpolatedTimeCallback) {
+            this.interpolatedTimeCallback = interpolatedTimeCallback;
+        }
+
+        @Override
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+            this.interpolatedTimeCallback.onTimeUpdate(interpolatedTime);
+        }
+    }
+
+    interface InterpolatedTimeCallback {
+        void onTimeUpdate(float interpolatedTime);
+    }
 }
