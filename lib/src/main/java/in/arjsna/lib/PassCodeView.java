@@ -66,7 +66,6 @@ public class PassCodeView extends View {
     private TextPaint textPaint;
     private float keyTextSize;
     private long animDuration = 200;
-    private final int MAX_RIPPLE_ALPHA = 180;
     private Paint circlePaint;
 
     public PassCodeView(Context context) {
@@ -168,8 +167,9 @@ public class PassCodeView extends View {
         int x = kpStartX, y = kpStartY;
         for (int i = 1 ; i <= KEYS_COUNT ; i ++) {
             keyRects.add(
-                    new KeyRect(new Rect(x, y, x + keyWidth, y + keyHeight),
-                    String.valueOf(i)));
+                    new KeyRect(this,
+                        new Rect(x, y, x + keyWidth, y + keyHeight),
+                        String.valueOf(i)));
             x = x + keyWidth;
             if (i % 3 == 0) {
                 y = y + keyHeight;
@@ -325,53 +325,9 @@ public class PassCodeView extends View {
                     passCodeText = passCodeText + keyRect.value;
                     invalidateAndNotifyListener();
                 }
-                playRippleEffect(keyRect);
+                keyRect.playRippleAnim();
             }
         }
-    }
-
-    private void playRippleEffect(final KeyRect keyRect) {
-        ValueAnimator animator = keyRect.animator;
-        animator.end();
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                if (keyRect.hasRippleEffect) {
-                    keyRect.rippleRadius = (int)((float)animation.getAnimatedValue());
-                    keyRect.circleAlpha =
-                            (int)(MAX_RIPPLE_ALPHA
-                                    - ((float)animation.getAnimatedValue()
-                                    * (MAX_RIPPLE_ALPHA / keyRect.requiredRadius)));
-                    invalidate(keyRect.rect.left, keyRect.rect.top, keyRect.rect.right, keyRect.rect.bottom);
-//                    Log.i("Animating", keyRect.rippleRadius + " "  + keyRect.circleAlpha);
-                    Log.i("Animating val", "" + animation.getAnimatedValue() + " " + keyRect.circleAlpha);
-                }
-            }
-        });
-        animator.addListener(new ValueAnimator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                keyRect.hasRippleEffect = true;
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                keyRect.hasRippleEffect = false;
-                keyRect.rippleRadius = 0;
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-        animator.setupEndValues();
-        animator.start();
     }
 
     public void reset() {
