@@ -2,10 +2,10 @@ package in.arjsna.lib;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.content.Context;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.CycleInterpolator;
 
 /**
  * Created by arjun on 8/3/16.
@@ -17,14 +17,19 @@ public class KeyRect {
     public int rippleRadius = 0;
     public int requiredRadius;
     public int circleAlpha;
+    private final Rect tempRect;
     public boolean hasRippleEffect = false;
     public ValueAnimator animator;
     private final int MAX_RIPPLE_ALPHA = 180;
     private InterpolatedValueListener interpolatedValueListener;
+    private int animationLeftRepeatCount = 2;
+    private int animationRightRepeatCount = 2;
+    private int cycleCount = 4;
 
     public KeyRect(View view, Rect rect, String value) {
         this.view = view;
         this.rect = rect;
+        this.tempRect = new Rect(rect);
         this.value = value;
         requiredRadius = (this.rect.right - this.rect.left) / 4;
         setUpAnimator();
@@ -76,6 +81,21 @@ public class KeyRect {
         this.value = value;
     }
 
+    public void setError() {
+        ValueAnimator goLeftAnimator = ValueAnimator.ofInt(0, 5);
+        goLeftAnimator.setInterpolator(new CycleInterpolator(2));
+        goLeftAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                rect.left += (int) animation.getAnimatedValue();
+                rect.right += (int) animation.getAnimatedValue();
+                Log.i("Animation Error", "Go left " + rect.left + " " + rect.right + " " + (int) animation.getAnimatedValue());
+                view.invalidate();
+            }
+        });
+        goLeftAnimator.start();
+    }
+
     public interface InterpolatedValueListener {
         void onValueUpdated();
     }
@@ -94,5 +114,4 @@ public class KeyRect {
         });
         animator.start();
     }
-
 }

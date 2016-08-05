@@ -159,6 +159,14 @@ public class TouchEffectAnimator {
         });
         valueGeneratorAnim.setDuration(animDuration);
         mView.startAnimation(valueGeneratorAnim);
+        ValueAnimator animator = ValueAnimator.ofFloat();
+        animator.setInterpolator(new BounceInterpolator());
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+
+            }
+        });
     }
 
     class ValueGeneratorAnim extends Animation {

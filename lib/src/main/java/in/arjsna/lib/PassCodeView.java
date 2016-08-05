@@ -332,6 +332,7 @@ public class PassCodeView extends View {
 
     public void reset() {
         this.passCodeText = "";
+        filledCount = 0;
         invalidate();
     }
 
@@ -355,21 +356,12 @@ public class PassCodeView extends View {
         this.textChangeListener = null;
     }
 
-    class ValueGeneratorAnim extends Animation {
-
-        private InterpolatedTimeCallback interpolatedTimeCallback;
-
-        ValueGeneratorAnim(InterpolatedTimeCallback interpolatedTimeCallback) {
-            this.interpolatedTimeCallback = interpolatedTimeCallback;
+    public void setError(boolean reset) {
+        if (reset) {
+            reset();
         }
-
-        @Override
-        protected void applyTransformation(float interpolatedTime, Transformation t) {
-            this.interpolatedTimeCallback.onTimeUpdate(interpolatedTime);
+        for (KeyRect keyRect : keyRects) {
+            keyRect.setError();
         }
-    }
-
-    interface InterpolatedTimeCallback {
-        void onTimeUpdate(float interpolatedTime);
     }
 }

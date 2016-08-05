@@ -31,10 +31,14 @@ public class MainActivity extends AppCompatActivity {
         passCodeView.setOnTextChangeListener(new PassCodeView.TextChangeListener() {
             @Override
             public void onTextChanged(String text) {
-                if (text.equals(PASSCODE)) {
-                    Intent intent = new Intent(MainActivity.this, LoggedInActivity.class);
-                    startActivity(intent);
-                    finish();
+                if (text.length() == 4) {
+                    if (text.equals(PASSCODE)) {
+                        Intent intent = new Intent(MainActivity.this, LoggedInActivity.class);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        passCodeView.setError(true);
+                    }
                 }
             }
         });
