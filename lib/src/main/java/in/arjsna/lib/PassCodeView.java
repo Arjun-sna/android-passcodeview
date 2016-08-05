@@ -1,5 +1,7 @@
 package in.arjsna.lib;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -19,6 +21,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.Animation;
+import android.view.animation.BounceInterpolator;
 import android.view.animation.Transformation;
 
 import java.util.ArrayList;
@@ -63,7 +66,7 @@ public class PassCodeView extends View {
     private TextPaint textPaint;
     private float keyTextSize;
     private long animDuration = 200;
-    private final int MAX_RIPPLE_ALPHA = 255;
+    private final int MAX_RIPPLE_ALPHA = 180;
     private Paint circlePaint;
 
     public PassCodeView(Context context) {
@@ -328,38 +331,47 @@ public class PassCodeView extends View {
     }
 
     private void playRippleEffect(final KeyRect keyRect) {
-        keyRect.hasRippleEffect = true;
-        keyRect.requiredRadius = (keyRect.rect.right - keyRect.rect.left) / 2;
-        ValueGeneratorAnim valueGeneratorAnim = new ValueGeneratorAnim(new InterpolatedTimeCallback() {
+        keyRect.requiredRadius = (keyRect.rect.right - keyRect.rect.left) / 4;
+        ValueAnimator animator = ValueAnimator.ofFloat(0, keyRect.requiredRadius);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
-            public void onTimeUpdate(float interpolatedTime) {
+            public void onAnimationUpdate(ValueAnimator animation) {
                 if (keyRect.hasRippleEffect) {
-                    keyRect.rippleRadius = (int) (keyRect.requiredRadius * interpolatedTime);
-                    keyRect.circleAlpha = (int) (MAX_RIPPLE_ALPHA - (MAX_RIPPLE_ALPHA * interpolatedTime));
+                    keyRect.rippleRadius = (int)((float)animation.getAnimatedValue());
+                    keyRect.circleAlpha =
+                            (int)(MAX_RIPPLE_ALPHA
+                                    - ((float)animation.getAnimatedValue()
+                                    * (MAX_RIPPLE_ALPHA / keyRect.requiredRadius)));
                     invalidate(keyRect.rect.left, keyRect.rect.top, keyRect.rect.right, keyRect.rect.bottom);
-                    Log.i("Animating", keyRect.rippleRadius + " "  + keyRect.circleAlpha);
+//                    Log.i("Animating", keyRect.rippleRadius + " "  + keyRect.circleAlpha);
+                    Log.i("Animating val", "" + animation.getAnimatedValue() + " " + keyRect.circleAlpha);
                 }
             }
         });
-        valueGeneratorAnim.setDuration(animDuration);
-        valueGeneratorAnim.setAnimationListener(new Animation.AnimationListener() {
+        animator.addListener(new ValueAnimator.AnimatorListener() {
             @Override
-            public void onAnimationStart(Animation animation) {
-                Log.i("Animating", "start");
+            public void onAnimationStart(Animator animation) {
+                keyRect.hasRippleEffect = true;
             }
 
             @Override
-            public void onAnimationEnd(Animation animation) {
+            public void onAnimationEnd(Animator animation) {
                 keyRect.hasRippleEffect = false;
-                Log.i("Animating", "end");
+                keyRect.rippleRadius = 0;
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
 
             }
         });
-        startAnimation(valueGeneratorAnim);
+        animator.setupEndValues();
+        animator.start();
     }
 
     public void reset() {

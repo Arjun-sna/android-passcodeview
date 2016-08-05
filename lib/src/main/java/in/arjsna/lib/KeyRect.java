@@ -8,7 +8,7 @@ import android.graphics.Rect;
 public class KeyRect {
     public Rect rect;
     public String value;
-    public int rippleRadius;
+    public int rippleRadius = 0;
     public int requiredRadius;
     public int circleAlpha;
     public boolean hasRippleEffect = false;
