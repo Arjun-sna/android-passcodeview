@@ -68,6 +68,8 @@ public class PassCodeView extends View {
     private long animDuration = 200;
     private Paint circlePaint;
 
+    private boolean dividerVisible;
+
     public PassCodeView(Context context) {
         super(context);
         init(context, null, 0, 0);
@@ -103,6 +105,7 @@ public class PassCodeView extends View {
 //            filledCount = values.getInteger(R.styleable.PassCodeView_filled_count, 0);
             filledDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_filled_drawable, -1));
             emptyDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_empty_drawable, -1));
+            dividerVisible = values.getBoolean(R.styleable.PassCodeView_divider_visible, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -158,7 +161,7 @@ public class PassCodeView extends View {
         kpStartY = drawableHeight + DRAWABLE_PADDING;
         keyWidth = getMeasuredWidth() / KEY_PAD_COLS;
         keyHeight = (getMeasuredHeight()
-                - (drawableHeight + 2 * DRAWABLE_PADDING)) / KEY_PAD_ROWS;
+                - (drawableHeight + DRAWABLE_PADDING)) / KEY_PAD_ROWS;
         initialiseKeyRects();
     }
 
@@ -196,7 +199,14 @@ public class PassCodeView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawCodeText(canvas);
+        if (dividerVisible) {
+            drawDivider();
+        }
         drawKeyPad(canvas);
+    }
+
+    private void drawDivider() {
+
     }
 
     private void drawKeyPad(Canvas canvas) {
@@ -344,7 +354,12 @@ public class PassCodeView extends View {
         setFilledCount(passCodeText.length());
         Log.i("New text", passCodeText);
         if (textChangeListener != null) {
-            textChangeListener.onTextChanged(passCodeText);
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    textChangeListener.onTextChanged(passCodeText);
+                }
+            }, 500);
         }
     }
 
