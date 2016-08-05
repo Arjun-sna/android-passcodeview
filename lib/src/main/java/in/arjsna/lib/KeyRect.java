@@ -1,5 +1,6 @@
 package in.arjsna.lib;
 
+import android.animation.ValueAnimator;
 import android.graphics.Rect;
 
 /**
@@ -12,10 +13,13 @@ public class KeyRect {
     public int requiredRadius;
     public int circleAlpha;
     public boolean hasRippleEffect = false;
+    public ValueAnimator animator;
 
     public KeyRect(Rect rect, String value) {
         this.rect = rect;
         this.value = value;
+        requiredRadius = (this.rect.right - this.rect.left) / 4;
+        animator = ValueAnimator.ofFloat(0, requiredRadius);
     }
 
     public void setValue(String value) {

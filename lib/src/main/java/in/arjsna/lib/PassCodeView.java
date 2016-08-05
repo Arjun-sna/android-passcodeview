@@ -331,8 +331,8 @@ public class PassCodeView extends View {
     }
 
     private void playRippleEffect(final KeyRect keyRect) {
-        keyRect.requiredRadius = (keyRect.rect.right - keyRect.rect.left) / 4;
-        ValueAnimator animator = ValueAnimator.ofFloat(0, keyRect.requiredRadius);
+        ValueAnimator animator = keyRect.animator;
+        animator.end();
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
