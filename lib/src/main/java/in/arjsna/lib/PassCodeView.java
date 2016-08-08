@@ -1,7 +1,5 @@
 package in.arjsna.lib;
 
-import android.animation.Animator;
-import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -13,16 +11,11 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.os.HandlerThread;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.animation.Animation;
-import android.view.animation.BounceInterpolator;
-import android.view.animation.Transformation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -135,18 +128,30 @@ public class PassCodeView extends View {
         }
     }
 
+    /**
+     * Set color for the keypad text
+     * @param color - Resource id of the color to be set
+     */
     public void setKeyTextColor(int color) {
         ColorStateList colorStateList = ColorStateList.valueOf(color);
         textPaint.setColor(colorStateList.getColorForState(getDrawableState(), 0));
         invalidate();
     }
 
+    /**
+     * Set size of keypad text
+     * @param size - Text size value to be set
+     */
     public void setKeyTextSize (float size) {
         textPaint.setTextSize(size);
         requestLayout();
         invalidate();
     }
 
+    /**
+     * Compute the start point(x, y) to draw drawables showing filled and empty
+     * pin code digits.
+     */
     private void computeDrawableStartXY() {
         int totalDrawableWidth = digits * drawableWidth;
         int totalPaddingWidth = DIGIT_PADDING * (digits - 1);
@@ -156,6 +161,9 @@ public class PassCodeView extends View {
         computeKeyboardStartXY();
     }
 
+    /**
+     * Compute the start point(x, y) to draw keyboard keys
+     */
     private void computeKeyboardStartXY() {
         kpStartX = 0;
         kpStartY = drawableHeight + DRAWABLE_PADDING;
@@ -165,6 +173,10 @@ public class PassCodeView extends View {
         initialiseKeyRects();
     }
 
+    /**
+     * Initialise a {@link KeyRect} for each key in keyboard which holds details
+     * of key like position, value etc.
+     */
     private void initialiseKeyRects() {
         keyRects.clear();
         int x = kpStartX, y = kpStartY;
@@ -185,6 +197,12 @@ public class PassCodeView extends View {
         keyRects.get(11).setValue(eraseChar);
     }
 
+    /**
+     * Create a {@link Bitmap} for the given @param resId
+     * @param resId - The resource id of the drawable for which the bitmap should be
+     *              created
+     * @return {@link Bitmap} of the drawable whose resource id is passed in
+     */
     private Bitmap getBitmap(int resId) {
         Drawable drawable = getResources().getDrawable(resId);
         Canvas canvas = new Canvas();
@@ -209,6 +227,11 @@ public class PassCodeView extends View {
 
     }
 
+    /**
+     * Draw the keys of keypad on the canvas starting from the previously computed start
+     * point if keyboard
+     * @param canvas - {@link Canvas} on which the keypad should be drawn
+     */
     private void drawKeyPad(Canvas canvas) {
         float centerHalf = (textPaint.descent() + textPaint.ascent()) / 2;
         for (KeyRect rect : keyRects) {
@@ -231,6 +254,12 @@ public class PassCodeView extends View {
         }
     }
 
+
+    /**
+     * Draw the {@link Bitmap} of the drawable which indicated filled and empty
+     * passcode digits
+     * @param canvas - {@link Canvas} on which the drawable should be drawn
+     */
     private void drawCodeText(Canvas canvas) {
         int x = drawableStartX, y = drawableStartY;
         int totalContentWidth = drawableWidth + DIGIT_PADDING;
@@ -268,6 +297,10 @@ public class PassCodeView extends View {
         computeDrawableStartXY();
     }
 
+    /**
+     * Set the count of digits entered by user
+     * @param count - {@link int} value of the digits filled
+     */
     private void setFilledCount(int count) {
         filledCount = count > digits ? digits : count;
         invalidate(drawableStartX,
@@ -281,6 +314,12 @@ public class PassCodeView extends View {
             return processTouch(event);
     }
 
+    /**
+     * Process the {@link MotionEvent} and detect the key pressed and perform
+     * appropriate action
+     * @param event - {@link MotionEvent} triggered by user action
+     * @return {code boolean} whether event is consumed or not
+     */
     private boolean processTouch(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
@@ -321,6 +360,14 @@ public class PassCodeView extends View {
         return true;
     }
 
+    /**
+     * Find the key which is pressed by find the {@link Rect} which container the
+     * passed in touch event points
+     * @param downEventX - X co-ordinate of the pointer down event
+     * @param downEventY - Y co-ordinate of the pointer down event
+     * @param upEventX - X co-ordinate of the pointer up event
+     * @param upEventY - Y co-ordinate of the pointer up event
+     */
     private void findKeyPressed(int downEventX, int downEventY, int upEventX, int upEventY) {
         for (KeyRect keyRect : keyRects) {
             if (keyRect.rect.contains(downEventX, downEventY)
@@ -340,16 +387,26 @@ public class PassCodeView extends View {
         }
     }
 
+    /**
+     * Reset the code to empty and redraw the view
+     */
     public void reset() {
         this.passCodeText = "";
-        filledCount = 0;
-        invalidate();
+        invalidateAndNotifyListener();
     }
 
+    /**
+     * Interface to get notified on text change
+     */
     public interface TextChangeListener {
         void onTextChanged(String text);
     }
 
+    /**
+     * Set the filled count of the passcode view and
+     * redraw based on the new value and notify the
+     * attached listener of the change
+     */
     private void invalidateAndNotifyListener() {
         setFilledCount(passCodeText.length());
         Log.i("New text", passCodeText);
@@ -363,14 +420,26 @@ public class PassCodeView extends View {
         }
     }
 
+    /**
+     * Attach {@code TextChangeListener} to get notified on text changes
+     * @param listener - {@Code TextChangeListener} object to be attached and notified
+     */
     public void setOnTextChangeListener(TextChangeListener listener) {
         this.textChangeListener = listener;
     }
 
+    /**
+     * Remove the attached {@code TextChangeListener}
+     */
     public void removeOnTextChangeListener() {
         this.textChangeListener = null;
     }
 
+    /**
+     * Show error feedback to the user
+     * @param reset - {@code boolean} value whether to reset the pass code before showing
+     *              error feedback
+     */
     public void setError(boolean reset) {
         if (reset) {
             reset();
