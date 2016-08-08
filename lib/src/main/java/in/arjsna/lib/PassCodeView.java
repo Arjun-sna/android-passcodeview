@@ -100,13 +100,15 @@ public class PassCodeView extends View {
             keyTextSize = values.getDimension(R.styleable.PassCodeView_key_text_size,
                     getResources().getDimension(R.dimen.key_text_size));
             dividerVisible = values.getBoolean(R.styleable.PassCodeView_divider_visible, true);
+            digitHorizontalPadding = (int) values.getDimension(R.styleable.PassCodeView_digit_spacing,
+                    getResources().getDimension(R.dimen.digit_horizontal_padding));
+            digitVerticalPadding = (int) values.getDimension(R.styleable.PassCodeView_digit_vertical_padding,
+                    getResources().getDimension(R.dimen.digit_vertical_padding));
 
             drawableWidth = (int) digitSize; //DEFAULT_DRAWABLE_DIM;
             drawableHeight = (int) digitSize; //DEFAULT_DRAWABLE_DIM;
             filledDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_filled_drawable, -1));
             emptyDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_empty_drawable, -1));
-            digitVerticalPadding = (int) getResources().getDimension(R.dimen.digit_vertical_padding);
-            digitHorizontalPadding = (int) getResources().getDimension(R.dimen.digit_horizontal_padding);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -210,7 +212,6 @@ public class PassCodeView extends View {
                 x = kpStartX;
             }
         }
-        // TODO: 8/3/16 looks bad
         keyRects.get(9).setValue("");
         keyRects.get(10).setValue("0");
         keyRects.get(11).setValue(eraseChar);
@@ -297,7 +298,6 @@ public class PassCodeView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // TODO: 8/3/16 mind the padding
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int paddingLeft = getPaddingLeft();
@@ -312,9 +312,10 @@ public class PassCodeView extends View {
         if (heightMode == MeasureSpec.EXACTLY) {
             measuredHeight = MeasureSpec.getSize(heightMeasureSpec);
         } else if (heightMode == MeasureSpec.AT_MOST) {
-            double height = MeasureSpec.getSize(heightMeasureSpec) * 0.7;
+            double height = MeasureSpec.getSize(heightMeasureSpec) * 0.8;
             measuredHeight = (int)height;// + paddingTop + paddingBottom;
         }
+        measuredHeight = (int) Math.max(measuredHeight, getResources().getDimension(R.dimen.key_pad_min_height));
         setMeasuredDimension(measuredWidth, measuredHeight);
         computeDrawableStartXY();
     }
