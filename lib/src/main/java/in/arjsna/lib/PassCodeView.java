@@ -369,20 +369,31 @@ public class PassCodeView extends View {
      * @param upEventY - Y co-ordinate of the pointer up event
      */
     private void findKeyPressed(int downEventX, int downEventY, int upEventX, int upEventY) {
-        for (KeyRect keyRect : keyRects) {
+        for (final KeyRect keyRect : keyRects) {
             if (keyRect.rect.contains(downEventX, downEventY)
                     && keyRect.rect.contains(upEventX, upEventY)) {
-                int length = passCodeText.length();
-                if (keyRect.value.equals(eraseChar)) {
-                    if (length > 0) {
-                        passCodeText = passCodeText.substring(0, passCodeText.length() - 1);
-                        invalidateAndNotifyListener();
+                keyRect.playRippleAnim(new KeyRect.RippleAnimListener() {
+                    @Override
+                    public void onStart() {
+                        int length = passCodeText.length();
+                        if (keyRect.value.equals(eraseChar)) {
+                            if (length > 0) {
+                                passCodeText = passCodeText.substring(0, passCodeText.length() - 1);
+                                setFilledCount(passCodeText.length());
+                            }
+                        } else if (!keyRect.value.isEmpty() && length < digits) {
+                            passCodeText = passCodeText + keyRect.value;
+                            setFilledCount(passCodeText.length());
+                        }
                     }
-                } else if (!keyRect.value.isEmpty() && length < digits) {
-                    passCodeText = passCodeText + keyRect.value;
-                    invalidateAndNotifyListener();
-                }
-                keyRect.playRippleAnim();
+
+                    @Override
+                    public void onEnd() {
+                        if (!keyRect.value.isEmpty()) {
+                            notifyListener();
+                        }
+                    }
+                });
             }
         }
     }
@@ -411,12 +422,13 @@ public class PassCodeView extends View {
         setFilledCount(passCodeText.length());
         Log.i("New text", passCodeText);
         if (textChangeListener != null) {
-            postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    textChangeListener.onTextChanged(passCodeText);
-                }
-            }, 500);
+            textChangeListener.onTextChanged(passCodeText);
+        }
+    }
+
+    private void notifyListener() {
+        if (textChangeListener != null) {
+            textChangeListener.onTextChanged(passCodeText);
         }
     }
 

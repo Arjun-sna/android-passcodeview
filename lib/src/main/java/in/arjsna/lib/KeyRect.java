@@ -25,6 +25,7 @@ public class KeyRect {
     private int animationLeftRepeatCount = 2;
     private int animationRightRepeatCount = 2;
     private int cycleCount = 4;
+    private RippleAnimListener rippleAnimListener;
 
     public KeyRect(View view, Rect rect, String value) {
         this.view = view;
@@ -35,6 +36,9 @@ public class KeyRect {
         setUpAnimator();
     }
 
+    /**
+     * Initialise the filed and listener for ripple effect animator
+     */
     private void setUpAnimator() {
         animator = ValueAnimator.ofFloat(0, requiredRadius);
         final int circleAlphaOffset = MAX_RIPPLE_ALPHA / requiredRadius;
@@ -57,12 +61,14 @@ public class KeyRect {
             @Override
             public void onAnimationStart(Animator animation) {
                 hasRippleEffect = true;
+                rippleAnimListener.onStart();
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
                 hasRippleEffect = false;
                 rippleRadius = 0;
+                rippleAnimListener.onEnd();
             }
 
             @Override
@@ -77,10 +83,17 @@ public class KeyRect {
         });
     }
 
+    /**
+     * Set the valued of this Key
+     * @param value - Value to be set for this key
+     */
     public void setValue(String value) {
         this.value = value;
     }
 
+    /**
+     * Show animation indicated invalid pincode
+     */
     public void setError() {
         ValueAnimator goLeftAnimator = ValueAnimator.ofInt(0, 5);
         goLeftAnimator.setInterpolator(new CycleInterpolator(2));
@@ -89,7 +102,6 @@ public class KeyRect {
             public void onAnimationUpdate(ValueAnimator animation) {
                 rect.left += (int) animation.getAnimatedValue();
                 rect.right += (int) animation.getAnimatedValue();
-                Log.i("Animation Error", "Go left " + rect.left + " " + rect.right + " " + (int) animation.getAnimatedValue());
                 view.invalidate();
             }
         });
@@ -104,8 +116,11 @@ public class KeyRect {
         this.interpolatedValueListener = listener;
     }
 
-    public void playRippleAnim() {
-        animator.end();
+    public void playRippleAnim(RippleAnimListener listener) {
+        this.rippleAnimListener = listener;
+        if (animator.isRunning()) {
+            animator.end();
+        }
         setOnValueUpdateListener(new KeyRect.InterpolatedValueListener() {
             @Override
             public void onValueUpdated() {
@@ -113,5 +128,10 @@ public class KeyRect {
             }
         });
         animator.start();
+    }
+
+    public interface RippleAnimListener {
+        void onStart();
+        void onEnd();
     }
 }
