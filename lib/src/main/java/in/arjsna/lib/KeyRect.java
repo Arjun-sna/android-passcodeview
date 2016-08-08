@@ -41,6 +41,7 @@ public class KeyRect {
      */
     private void setUpAnimator() {
         animator = ValueAnimator.ofFloat(0, requiredRadius);
+        animator.setDuration(400);
         final int circleAlphaOffset = MAX_RIPPLE_ALPHA / requiredRadius;
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -48,6 +49,7 @@ public class KeyRect {
                 if (hasRippleEffect) {
                     float animatedValue = (float) animation.getAnimatedValue();
                     rippleRadius = (int) animatedValue;
+                    Log.i("Ripple start", "radius " + rippleRadius);
                     circleAlpha =
                             (int)(MAX_RIPPLE_ALPHA
                                     - (animatedValue
@@ -61,7 +63,6 @@ public class KeyRect {
             @Override
             public void onAnimationStart(Animator animation) {
                 hasRippleEffect = true;
-                rippleAnimListener.onStart();
             }
 
             @Override
@@ -116,20 +117,26 @@ public class KeyRect {
         this.interpolatedValueListener = listener;
     }
 
+    /**
+     * Start Playing ripple animation and notify listener accordingly
+     * @param listener - {@link in.arjsna.lib.KeyRect.RippleAnimListener} object to be
+     *                 notified
+     */
     public void playRippleAnim(RippleAnimListener listener) {
         this.rippleAnimListener = listener;
-        if (animator.isRunning()) {
-            animator.end();
-        }
         setOnValueUpdateListener(new KeyRect.InterpolatedValueListener() {
             @Override
             public void onValueUpdated() {
                 view.invalidate(rect);
             }
         });
+        rippleAnimListener.onStart();
         animator.start();
     }
 
+    /**
+     * Interface to get notified on ripple animation status
+     */
     public interface RippleAnimListener {
         void onStart();
         void onEnd();
