@@ -2,19 +2,20 @@ package in.arjsna.lib;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,18 +31,18 @@ public class PassCodeView extends View {
     private final int KEY_PAD_COLS = 3;
     private final int KEY_PAD_ROWS = 4;
     private int digits;
-    private int filledCount;
+    private int filledCount = 0;
     private Bitmap filledDrawable;
     private Bitmap emptyDrawable;
     private Paint paint;
-    private int DEFAULT_DRAWABLE_DIM = 80;
+    private int DEFAULT_DRAWABLE_DIM;
     private int DEFAULT_VIEW_HEIGHT = 200;
-    private int DRAWABLE_PADDING = 100;
+    private int digitVerticalPadding;
     private int drawableWidth;
     private int drawableHeight;
     private int drawableStartX;
     private int drawableStartY;
-    private static final int DIGIT_PADDING = 40;
+    private int digitHorizontalPadding;
     private int kpStartX;
     private int kpStartY;
     private ArrayList<KeyRect> keyRects = new ArrayList<>();
@@ -54,6 +55,18 @@ public class PassCodeView extends View {
 
     private Map<Integer, Integer> touchXMap = new HashMap<>();
     private Map<Integer, Integer> touchYMap = new HashMap<>();
+    private Typeface typeFace;
+    private TextPaint textPaint;
+    private float keyTextSize;
+    private long animDuration = 200;
+    private Paint circlePaint;
+
+    private boolean dividerVisible;
+    private float dividerStartX;
+    private float dividerStartY;
+    private float dividerEndX;
+    private float dividerEndY;
+    private Context context;
 
     public PassCodeView(Context context) {
         super(context);
@@ -77,66 +90,145 @@ public class PassCodeView extends View {
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        this.context = context;
         TypedArray values = context.getTheme().obtainStyledAttributes(attrs,
                 R.styleable.PassCodeView, defStyleAttr, defStyleRes);
         try {
             digits = values.getInteger(R.styleable.PassCodeView_digits, 4);
-            filledCount = values.getInteger(R.styleable.PassCodeView_filled_count, 0);
+            float digitSize = values.getDimension(R.styleable.PassCodeView_digit_size,
+                    getResources().getDimension(R.dimen.drawableDimen));
+            keyTextSize = values.getDimension(R.styleable.PassCodeView_key_text_size,
+                    getResources().getDimension(R.dimen.key_text_size));
+            dividerVisible = values.getBoolean(R.styleable.PassCodeView_divider_visible, true);
+            digitHorizontalPadding = (int) values.getDimension(R.styleable.PassCodeView_digit_spacing,
+                    getResources().getDimension(R.dimen.digit_horizontal_padding));
+            digitVerticalPadding = (int) values.getDimension(R.styleable.PassCodeView_digit_vertical_padding,
+                    getResources().getDimension(R.dimen.digit_vertical_padding));
+
+            drawableWidth = (int) digitSize; //DEFAULT_DRAWABLE_DIM;
+            drawableHeight = (int) digitSize; //DEFAULT_DRAWABLE_DIM;
             filledDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_filled_drawable, -1));
             emptyDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_empty_drawable, -1));
-            drawableWidth = DEFAULT_DRAWABLE_DIM;
-            drawableHeight = DEFAULT_DRAWABLE_DIM;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        paint = new Paint(TextPaint.ANTI_ALIAS_FLAG);
-        paint.setStyle(Paint.Style.FILL);
         values.recycle();
+        preparePaint();
     }
 
+    private void preparePaint() {
+        paint = new Paint(TextPaint.ANTI_ALIAS_FLAG);
+        textPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
+        circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        circlePaint.setStyle(Paint.Style.FILL);
+        paint.setStyle(Paint.Style.FILL);
+        textPaint.setStyle(Paint.Style.FILL);
+        textPaint.setColor(Color.argb(255, 0, 0, 0));
+        textPaint.density = getResources().getDisplayMetrics().density;
+        textPaint.setTextSize(keyTextSize);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    public void setTypeFace(Typeface typeFace) {
+        if (this.typeFace != typeFace) {
+            this.typeFace = typeFace;
+            textPaint.setTypeface(typeFace);
+            requestLayout();
+            invalidate();
+        }
+    }
+
+    /**
+     * Set color for the keypad text
+     * @param color - Resource id of the color to be set
+     */
+    public void setKeyTextColor(int color) {
+        ColorStateList colorStateList = ColorStateList.valueOf(color);
+        textPaint.setColor(colorStateList.getColorForState(getDrawableState(), 0));
+        invalidate();
+    }
+
+    /**
+     * Set size of keypad text
+     * @param size - Text size value to be set
+     */
+    public void setKeyTextSize (float size) {
+        textPaint.setTextSize(size);
+        requestLayout();
+        invalidate();
+    }
+
+    /**
+     * Compute the start point(x, y) to draw drawables showing filled and empty
+     * pin code digits.
+     */
     private void computeDrawableStartXY() {
         int totalDrawableWidth = digits * drawableWidth;
-        int totalPaddingWidth = DIGIT_PADDING * (digits - 1);
+        int totalPaddingWidth = digitHorizontalPadding * (digits - 1);
         int totalReqWidth = totalDrawableWidth + totalPaddingWidth;
         drawableStartX = getMeasuredWidth() / 2 - totalReqWidth / 2;
-        drawableStartY = (drawableHeight + DRAWABLE_PADDING) / 2 - drawableHeight / 2;
+        drawableStartY = (drawableHeight + digitVerticalPadding) / 2 - drawableHeight / 2;
         computeKeyboardStartXY();
     }
 
+    /**
+     * Compute the start point(x, y) to draw keyboard keys
+     */
     private void computeKeyboardStartXY() {
         kpStartX = 0;
-        kpStartY = drawableHeight + DRAWABLE_PADDING;
+        kpStartY = drawableHeight + digitVerticalPadding;
         keyWidth = getMeasuredWidth() / KEY_PAD_COLS;
         keyHeight = (getMeasuredHeight()
-                - (drawableHeight + 2 * DRAWABLE_PADDING)) / KEY_PAD_ROWS;
+                - (drawableHeight + digitVerticalPadding)) / KEY_PAD_ROWS;
         initialiseKeyRects();
+        if (dividerVisible) {
+            computeDividerPos();
+        }
     }
 
+    private void computeDividerPos() {
+        float widthFactor = 10;
+        dividerStartX = keyWidth / 2 - widthFactor;
+        dividerStartY = drawableHeight + digitVerticalPadding;
+        dividerEndX = (getMeasuredWidth() - keyWidth / 2) + widthFactor;
+        dividerEndY = dividerStartY;
+    }
+
+    /**
+     * Initialise a {@link KeyRect} for each key in keyboard which holds details
+     * of key like position, value etc.
+     */
     private void initialiseKeyRects() {
         keyRects.clear();
         int x = kpStartX, y = kpStartY;
         for (int i = 1 ; i <= KEYS_COUNT ; i ++) {
             keyRects.add(
-                    new KeyRect(new Rect(x, y, x + keyWidth, y + keyHeight),
-                    String.valueOf(i)));
+                    new KeyRect(this,
+                        new Rect(x, y, x + keyWidth, y + keyHeight),
+                        String.valueOf(i)));
             x = x + keyWidth;
             if (i % 3 == 0) {
                 y = y + keyHeight;
                 x = kpStartX;
             }
         }
-        // TODO: 8/3/16 looks bad
         keyRects.get(9).setValue("");
         keyRects.get(10).setValue("0");
         keyRects.get(11).setValue(eraseChar);
     }
 
+    /**
+     * Create a {@link Bitmap} for the given @param resId
+     * @param resId - The resource id of the drawable for which the bitmap should be
+     *              created
+     * @return {@link Bitmap} of the drawable whose resource id is passed in
+     */
     private Bitmap getBitmap(int resId) {
         Drawable drawable = getResources().getDrawable(resId);
         Canvas canvas = new Canvas();
-        Bitmap bitmap = Bitmap.createBitmap(DEFAULT_DRAWABLE_DIM, DEFAULT_DRAWABLE_DIM, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(drawableWidth, drawableHeight, Bitmap.Config.ARGB_8888);
         canvas.setBitmap(bitmap);
-        drawable.setBounds(0, 0, DEFAULT_DRAWABLE_DIM, DEFAULT_DRAWABLE_DIM);
+        drawable.setBounds(0, 0, drawableWidth, drawableHeight);
         drawable.draw(canvas);
         return bitmap;
     }
@@ -144,33 +236,56 @@ public class PassCodeView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        paint.setColor(Color.argb(255, 0, 0, 0));
-        drawCodeText(canvas);
+        drawDigitDrawable(canvas);
+        if (dividerVisible) {
+            drawDivider(canvas);
+        }
         drawKeyPad(canvas);
     }
 
+    private void drawDivider(Canvas canvas) {
+        paint.setAlpha(40);
+        canvas.drawLine(dividerStartX, dividerStartY, dividerEndX, dividerEndY, paint);
+    }
+
+    /**
+     * Draw the keys of keypad on the canvas starting from the previously computed start
+     * point if keyboard
+     * @param canvas - {@link Canvas} on which the keypad should be drawn
+     */
     private void drawKeyPad(Canvas canvas) {
-        paint.setTextSize(getResources().getDimension(R.dimen.key_text_size));
-        paint.setTextAlign(Paint.Align.CENTER);
-        float centerHalf = (paint.descent() + paint.ascent()) / 2;
+        float centerHalf = (textPaint.descent() + textPaint.ascent()) / 2;
         for (KeyRect rect : keyRects) {
             canvas.drawText(rect.value,
                     rect.rect.exactCenterX(),
-                    rect.rect.exactCenterY() - centerHalf, paint);
+                    rect.rect.exactCenterY() - centerHalf, textPaint);
+            if (rect.hasRippleEffect) {
+                circlePaint.setAlpha(rect.circleAlpha);
+                canvas.drawCircle(rect.rect.exactCenterX(), rect.rect.exactCenterY(),
+                        rect.rippleRadius, circlePaint);
+            }
             if (DEBUG) {
                 canvas.drawLine(rect.rect.left,
                         rect.rect.centerY(),
-                        rect.rect.right, rect.rect.centerY(), paint);
+                        rect.rect.right, rect.rect.centerY(), textPaint);
                 canvas.drawLine(rect.rect.centerX(),
                         rect.rect.top,
-                        rect.rect.centerX(), rect.rect.bottom, paint);
+                        rect.rect.centerX(), rect.rect.bottom, textPaint);
+                canvas.drawRect(rect.rect, textPaint);
             }
         }
     }
 
-    private void drawCodeText(Canvas canvas) {
+
+    /**
+     * Draw the {@link Bitmap} of the drawable which indicated filled and empty
+     * passcode digits
+     * @param canvas - {@link Canvas} on which the drawable should be drawn
+     */
+    private void drawDigitDrawable(Canvas canvas) {
+        paint.setAlpha(255);
         int x = drawableStartX, y = drawableStartY;
-        int totalContentWidth = drawableWidth + DIGIT_PADDING;
+        int totalContentWidth = drawableWidth + digitHorizontalPadding;
         for (int i = 1 ; i <= filledCount ; i ++) {
             canvas.drawBitmap(filledDrawable, x, y, paint);
             x += totalContentWidth;
@@ -183,7 +298,6 @@ public class PassCodeView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // TODO: 8/3/16 mind the padding
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int paddingLeft = getPaddingLeft();
@@ -191,20 +305,25 @@ public class PassCodeView extends View {
         int paddingTop = getPaddingTop();
         int paddingBottom = getPaddingBottom();
         int measuredWidth = 0, measuredHeight = 0;
-        if (widthMode == MeasureSpec.EXACTLY) {
+        if (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST) {
             measuredWidth = MeasureSpec.getSize(widthMeasureSpec);
         }
 
         if (heightMode == MeasureSpec.EXACTLY) {
             measuredHeight = MeasureSpec.getSize(heightMeasureSpec);
         } else if (heightMode == MeasureSpec.AT_MOST) {
-            double height = MeasureSpec.getSize(heightMeasureSpec) * 0.7;
+            double height = MeasureSpec.getSize(heightMeasureSpec) * 0.8;
             measuredHeight = (int)height;// + paddingTop + paddingBottom;
         }
+        measuredHeight = (int) Math.max(measuredHeight, getResources().getDimension(R.dimen.key_pad_min_height));
         setMeasuredDimension(measuredWidth, measuredHeight);
         computeDrawableStartXY();
     }
 
+    /**
+     * Set the count of digits entered by user
+     * @param count - {@link int} value of the digits filled
+     */
     private void setFilledCount(int count) {
         filledCount = count > digits ? digits : count;
         invalidate(drawableStartX,
@@ -218,6 +337,12 @@ public class PassCodeView extends View {
             return processTouch(event);
     }
 
+    /**
+     * Process the {@link MotionEvent} and detect the key pressed and perform
+     * appropriate action
+     * @param event - {@link MotionEvent} triggered by user action
+     * @return {code boolean} whether event is consumed or not
+     */
     private boolean processTouch(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
@@ -258,28 +383,64 @@ public class PassCodeView extends View {
         return true;
     }
 
+    /**
+     * Find the key which is pressed by find the {@link Rect} which container the
+     * passed in touch event points
+     * @param downEventX - X co-ordinate of the pointer down event
+     * @param downEventY - Y co-ordinate of the pointer down event
+     * @param upEventX - X co-ordinate of the pointer up event
+     * @param upEventY - Y co-ordinate of the pointer up event
+     */
     private void findKeyPressed(int downEventX, int downEventY, int upEventX, int upEventY) {
-        for (KeyRect keyRect : keyRects) {
+        for (final KeyRect keyRect : keyRects) {
             if (keyRect.rect.contains(downEventX, downEventY)
                     && keyRect.rect.contains(upEventX, upEventY)) {
-                int length = passCodeText.length();
-                if (keyRect.value.equals(eraseChar)) {
-                    if (length > 0) {
-                        passCodeText = passCodeText.substring(0, passCodeText.length() - 1);
-                        invalidateAndNotifyListener();
+                keyRect.playRippleAnim(new KeyRect.RippleAnimListener() {
+                    @Override
+                    public void onStart() {
+                        int length = passCodeText.length();
+                        if (keyRect.value.equals(eraseChar)) {
+                            if (length > 0) {
+                                passCodeText = passCodeText.substring(0, passCodeText.length() - 1);
+                                setFilledCount(passCodeText.length());
+                            }
+                        } else if (!keyRect.value.isEmpty() && length < digits) {
+                            passCodeText = passCodeText + keyRect.value;
+                            setFilledCount(passCodeText.length());
+                        }
                     }
-                } else if (!keyRect.value.isEmpty() && length < digits) {
-                    passCodeText = passCodeText + keyRect.value;
-                    invalidateAndNotifyListener();
-                }
+
+                    @Override
+                    public void onEnd() {
+                        if (!keyRect.value.isEmpty()) {
+                            notifyListener();
+                        }
+                    }
+                });
             }
         }
     }
 
+    /**
+     * Reset the code to empty and redraw the view
+     */
+    public void reset() {
+        this.passCodeText = "";
+        invalidateAndNotifyListener();
+    }
+
+    /**
+     * Interface to get notified on text change
+     */
     public interface TextChangeListener {
         void onTextChanged(String text);
     }
 
+    /**
+     * Set the filled count of the passcode view and
+     * redraw based on the new value and notify the
+     * attached listener of the change
+     */
     private void invalidateAndNotifyListener() {
         setFilledCount(passCodeText.length());
         Log.i("New text", passCodeText);
@@ -288,12 +449,38 @@ public class PassCodeView extends View {
         }
     }
 
+    private void notifyListener() {
+        if (textChangeListener != null) {
+            textChangeListener.onTextChanged(passCodeText);
+        }
+    }
+
+    /**
+     * Attach {@code TextChangeListener} to get notified on text changes
+     * @param listener - {@Code TextChangeListener} object to be attached and notified
+     */
     public void setOnTextChangeListener(TextChangeListener listener) {
         this.textChangeListener = listener;
     }
 
+    /**
+     * Remove the attached {@code TextChangeListener}
+     */
     public void removeOnTextChangeListener() {
         this.textChangeListener = null;
     }
 
+    /**
+     * Show error feedback to the user
+     * @param reset - {@code boolean} value whether to reset the pass code before showing
+     *              error feedback
+     */
+    public void setError(boolean reset) {
+        if (reset) {
+            reset();
+        }
+        for (KeyRect keyRect : keyRects) {
+            keyRect.setError();
+        }
+    }
 }
