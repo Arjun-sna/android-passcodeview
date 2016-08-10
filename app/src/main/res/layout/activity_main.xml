@@ -9,7 +9,10 @@
     android:orientation="vertical"
     android:gravity="center"
     tools:context="in.arjsna.passcodeviewsample.MainActivity">
-
+    <ImageView
+        android:layout_width="50.0dp"
+        android:layout_height="50.0dp"
+        android:src="@drawable/lock"/>
     <TextView
         android:id="@+id/promptview"
         android:layout_width="match_parent"
