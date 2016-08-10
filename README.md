@@ -1,4 +1,4 @@
-# Android Passcode Keypad View
+# Android Passcode Keypad View [ ![Download](https://api.bintray.com/packages/arjun-sna/maven/passcodeview/images/download.svg) ](https://bintray.com/arjun-sna/maven/passcodeview/_latestVersion)
 
 A custom view with keyboard and character display to be used for authentication. 
 
