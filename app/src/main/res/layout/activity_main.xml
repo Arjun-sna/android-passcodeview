@@ -22,7 +22,7 @@
         android:gravity="center"
         android:padding="20.0dp"/>
 
-    <in.arjsna.lib.PassCodeView
+    <in.arjsna.passcodeview.PassCodeView
         android:id="@+id/pass_code_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -8,7 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import in.arjsna.lib.PassCodeView;
+import in.arjsna.passcodeview.PassCodeView;
 
 public class MainActivity extends AppCompatActivity {
     private final String PASSCODE = "3322";

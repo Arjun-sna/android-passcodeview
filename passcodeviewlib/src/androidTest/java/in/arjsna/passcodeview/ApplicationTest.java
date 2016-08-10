@@ -1,4 +1,4 @@
-package in.arjsna.lib;
+package in.arjsna.passcodeview;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

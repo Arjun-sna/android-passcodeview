@@ -1,4 +1,4 @@
-package in.arjsna.lib;
+package in.arjsna.passcodeview;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package in.arjsna.lib;
+package in.arjsna.passcodeview;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
@@ -119,7 +119,7 @@ public class KeyRect {
 
     /**
      * Start Playing ripple animation and notify listener accordingly
-     * @param listener - {@link in.arjsna.lib.KeyRect.RippleAnimListener} object to be
+     * @param listener - {@link in.arjsna.passcodeview.KeyRect.RippleAnimListener} object to be
      *                 notified
      */
     public void playRippleAnim(RippleAnimListener listener) {

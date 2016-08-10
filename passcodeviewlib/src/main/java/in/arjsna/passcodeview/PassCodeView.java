@@ -1,4 +1,4 @@
-package in.arjsna.lib;
+package in.arjsna.passcodeview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -456,8 +456,8 @@ public class PassCodeView extends View {
     }
 
     /**
-     * Attach {@code TextChangeListener} to get notified on text changes
-     * @param listener - {@Code TextChangeListener} object to be attached and notified
+     * Attach {@link TextChangeListener} to get notified on text changes
+     * @param listener - {@link TextChangeListener} object to be attached and notified
      */
     public void setOnTextChangeListener(TextChangeListener listener) {
         this.textChangeListener = listener;
