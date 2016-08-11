@@ -9,7 +9,16 @@ The view has a bunch customisation options to make to look and work the way whic
 <img src="https://arjun-sna.github.io/raw/passcodeview_2.gif" width="250" />
 
 ## Installation
---to be updated
+Add gradle dependency
+```
+repositories {
+    jcenter()
+}
+dependencies {
+    compile 'in.arjsna:passcodeviewlib:1.0.0'
+}
+
+```
 
 ## Usage
  Add the view in the layout file
