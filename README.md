@@ -79,6 +79,19 @@ passCodeView.setKeyTextColor(getResources.getColor(R.color.black));
 passCodeView.setKeyTextSize(30);
 
 /**
+ * Set passcode digit lenght
+ * @param length - digit length to be set
+ */
+passCodeView.setDigitLength(6);
+
+
+/**
+ * Set current passcode text
+ * @param code - {@code String} passcode string to be set
+ */
+public void setPassCode("8854")
+
+/**
  * Reset the code to empty
  */
 passCodeView.reset();
