@@ -483,4 +483,39 @@ public class PassCodeView extends View {
             keyRect.setError();
         }
     }
+
+    /**
+     * Set passcode digit length
+     * @param length - {@code int} digit length to be set
+     */
+    public void setDigitLength(int length) {
+        this.digits = length;
+        invalidate();
+    }
+
+    /**
+     * get digit length
+     * @return - {@code int} current length of passcode
+     */
+    public int getDigitLength() {
+        return digits;
+    }
+
+    /**
+     * Set current passcode text
+     * @param code - {@code String} passcode string to be set
+     */
+    public void setPassCode(String code) {
+        this.passCodeText = code;
+        setFilledCount(code.length());
+        invalidate();
+    }
+
+    /**
+     * Get current passcode entered
+     * @return - {@code String} current passcode entered
+     */
+    public String getPassCodeText() {
+        return passCodeText;
+    }
 }
