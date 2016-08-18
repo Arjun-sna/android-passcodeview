@@ -1,4 +1,4 @@
-# Android Passcode Keypad View [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-android--passcodeview-green.svg?style=true)](https://android-arsenal.com/details/1/4124) [ ![Download](https://api.bintray.com/packages/arjun-sna/maven/passcodeview/images/download.svg) ](https://bintray.com/arjun-sna/maven/passcodeview/_latestVersion)
+# Android Passcode Keypad View [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-android--passcodeview-green.svg?style=true)](https://android-arsenal.com/details/1/4124) [ ![Download](https://api.bintray.com/packages/arjun-sna/maven/passcodeviewlib/images/download.svg) ](https://bintray.com/arjun-sna/maven/passcodeviewlib/_latestVersion)
 
 A custom view with keyboard and character display to be used for authentication. 
 
@@ -15,7 +15,7 @@ repositories {
     jcenter()
 }
 dependencies {
-    compile 'in.arjsna:passcodeviewlib:1.0.0'
+    compile 'in.arjsna:passcodeviewlib:1.1.0'
 }
 
 ```
