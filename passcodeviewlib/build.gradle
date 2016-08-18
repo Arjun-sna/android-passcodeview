@@ -2,10 +2,10 @@ apply plugin: 'com.android.library'
 //apply from: 'maven-push.gradle'
 ext {
     bintrayRepo = 'maven'
-    bintrayName = 'passcodeview'
+    bintrayName = 'passcodeviewlib'
 
     publishedGroupId = 'in.arjsna'
-    libraryName = 'passcodeview'
+    libraryName = 'passcodeviewlib'
     artifact = 'passcodeviewlib'
 
     libraryDescription = 'A custom view with keyboard and character display to be used for authentication.'
@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/Arjun-sna/android-passcodeview/'
     gitUrl = 'https://github.com/Arjun-sna/android-passcodeview.git'
 
-    libraryVersion = '1.0.1'
+    libraryVersion = '1.1.0'
 
     developerId = 'Arjun-Sna'
     developerName = 'Arjun'
