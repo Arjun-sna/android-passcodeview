@@ -326,10 +326,14 @@ public class PassCodeView extends View {
      */
     private void setFilledCount(int count) {
         filledCount = count > digits ? digits : count;
-        invalidate(drawableStartX,
+        /*invalidate(drawableStartX,
                 drawableStartX,
                 drawableStartX + getMeasuredWidth(),
-                drawableStartY + getMeasuredHeight());
+                drawableStartY + getMeasuredHeight());*/
+        /* The coordinates passed to `invalidate` method above is wrong
+        		which makes the View not be drawn correctly
+        		hence calling the default invalidate method */
+        invalidate();
     }
 
     @Override
