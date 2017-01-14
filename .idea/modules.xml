@@ -6,7 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/android-passcodeview.iml" filepath="$PROJECT_DIR$/android-passcodeview.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/passcodeviewlib/lib.iml" filepath="$PROJECT_DIR$/passcodeviewlib/lib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/passcodeviewlib/passcodeviewlib.iml" filepath="$PROJECT_DIR$/passcodeviewlib/passcodeviewlib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/passcodeview/passcodeview.iml" filepath="$PROJECT_DIR$/passcodeview/passcodeview.iml" />
     </modules>
   </component>
 </project>
