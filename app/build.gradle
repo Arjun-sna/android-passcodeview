@@ -24,7 +24,7 @@ dependencies {
   testCompile 'junit:junit:4.12'
   //    compile 'com.android.support:appcompat-v7:24.0.0'
 //  compile 'in.arjsna:passcodeviewlib:1.1.0'
-  compile 'in.arjsna:passcodeview:1.2.0'
+  compile 'in.arjsna:passcodeview:1.2.1'
 
 //      compile project(':passcodeview')
 }

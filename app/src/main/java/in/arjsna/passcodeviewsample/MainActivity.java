@@ -22,6 +22,8 @@ public class MainActivity extends AppCompatActivity {
     Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/Font-Bold.ttf");
     passCodeView.setTypeFace(typeFace);
     passCodeView.setKeyTextColor(R.color.black_shade);
+    passCodeView.setEmptyDrawable(R.drawable.empty_dot);
+    passCodeView.setFilledDrawable(R.drawable.filled_dot);
     promptView.setTypeface(typeFace);
     bindEvents();
   }

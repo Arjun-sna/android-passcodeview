@@ -108,9 +108,8 @@ public class PassCodeView extends View {
 
       drawableWidth = (int) digitSize; //DEFAULT_DRAWABLE_DIM;
       drawableHeight = (int) digitSize; //DEFAULT_DRAWABLE_DIM;
-      filledDrawable =
-          getBitmap(values.getResourceId(R.styleable.PassCodeView_filled_drawable, -1));
-      emptyDrawable = getBitmap(values.getResourceId(R.styleable.PassCodeView_empty_drawable, -1));
+      setFilledDrawable(values.getResourceId(R.styleable.PassCodeView_filled_drawable, -1));
+      setEmptyDrawable(values.getResourceId(R.styleable.PassCodeView_empty_drawable, -1));
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -421,6 +420,15 @@ public class PassCodeView extends View {
         });
       }
     }
+  }
+
+  public void setEmptyDrawable(int resId) {
+    emptyDrawable = getBitmap(resId);
+  }
+
+
+  public void setFilledDrawable(int resId) {
+    filledDrawable = getBitmap(resId);
   }
 
   /**
