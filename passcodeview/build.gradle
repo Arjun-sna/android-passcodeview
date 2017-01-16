@@ -14,7 +14,7 @@ ext {
   siteUrl = 'https://github.com/Arjun-sna/android-passcodeview/'
   gitUrl = 'https://github.com/Arjun-sna/android-passcodeview.git'
 
-  libraryVersion = '1.2.0'
+  libraryVersion = '1.2.1'
 
   developerId = 'Arjun-Sna'
   developerName = 'Arjun'
