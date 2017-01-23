@@ -11,37 +11,13 @@ import android.widget.TextView;
 import in.arjsna.passcodeview.PassCodeView;
 
 public class MainActivity extends AppCompatActivity {
-  private final String PASSCODE = "3322";
-  private PassCodeView passCodeView;
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-    passCodeView = (PassCodeView) findViewById(R.id.pass_code_view);
-    TextView promptView = (TextView) findViewById(R.id.promptview);
-    Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/Font-Bold.ttf");
-    passCodeView.setTypeFace(typeFace);
-    passCodeView.setKeyTextColor(R.color.black_shade);
-    passCodeView.setEmptyDrawable(R.drawable.empty_dot);
-    passCodeView.setFilledDrawable(R.drawable.filled_dot);
-    promptView.setTypeface(typeFace);
-    bindEvents();
-  }
-
-  private void bindEvents() {
-    passCodeView.setOnTextChangeListener(new PassCodeView.TextChangeListener() {
-      @Override public void onTextChanged(String text) {
-        if (text.length() == 4) {
-          if (text.equals(PASSCODE)) {
-            Intent intent = new Intent(MainActivity.this, LoggedInActivity.class);
-            startActivity(intent);
-            finish();
-          } else {
-            passCodeView.setError(true);
-          }
-        }
-      }
-    });
+    getSupportFragmentManager().beginTransaction()
+        .add(R.id.container, new MainFragment())
+        .commit();
   }
 
   @Override public boolean onCreateOptionsMenu(Menu menu) {
