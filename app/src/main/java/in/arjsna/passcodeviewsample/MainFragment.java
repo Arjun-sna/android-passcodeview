@@ -15,7 +15,7 @@ import in.arjsna.passcodeview.PassCodeView;
  * Created by arjun on 23/1/17.
  */
 public class MainFragment extends Fragment{
-  private final String PASSCODE = "3322";
+  private final String PASSCODE = "1234";
   private PassCodeView passCodeView;
 
   @Nullable @Override

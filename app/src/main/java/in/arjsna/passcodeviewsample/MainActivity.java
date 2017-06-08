@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import android.widget.Toast;
 import in.arjsna.passcodeview.PassCodeView;
 
 public class MainActivity extends AppCompatActivity {
@@ -18,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
     getSupportFragmentManager().beginTransaction()
         .add(R.id.container, new MainFragment())
         .commit();
+    Toast.makeText(MainActivity.this, "Passcode: 1234", Toast.LENGTH_LONG).show();
   }
 
   @Override public boolean onCreateOptionsMenu(Menu menu) {
