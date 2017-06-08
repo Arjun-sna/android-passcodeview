@@ -5,8 +5,9 @@ A custom view with keyboard and character display to be used for authentication.
 The view has a bunch customisation options to make to look and work the way whichever needed.
 
 ## Demo
-<img src="https://arjun-sna.github.io/raw/passcodeview_1.gif" width="250" />
-<img src="https://arjun-sna.github.io/raw/passcodeview_2.gif" width="250" />
+<a href='https://play.google.com/store/apps/details?id=in.arjsna.passcodeviewsample' target='_blank'><img height='50' style='border:0px;height:50px;' src='https://cdn.rawgit.com/Arjun-sna/Arjun-sna.github.io/f8228c83/raw/GooglePlay.png' border='0' alt='GooglePlay Link' /></a>
+
+<img src="https://arjun-sna.github.io/raw/passcodeview_1.gif" width="250" />  <img src="https://arjun-sna.github.io/raw/passcodeview_2.gif" width="250" />
 
 ## Installation
 Add gradle dependency
